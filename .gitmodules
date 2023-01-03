@@ -1,0 +1,3 @@
+[submodule "pl-mcu-epd"]
+	path = pl-mcu-epd
+	url = https://github.com/ankurag12/pl-mcu-epd
