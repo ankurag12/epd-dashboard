@@ -11,10 +11,10 @@ class ESP32GPIO(mcu.GPIO):
 
     def __init__(self, config=None):
         super().__init__(config=config)
-        self._pin = Pin(config["pin"], mode=self._mode_map[config["mode"]])
+        self._pin = Pin(config["pin"], mode=ESP32GPIO._mode_map[config["mode"]])
 
     def configure_pin(self, config):
-        self._pin = Pin.init(config["pin"], mode=self._mode_map[config["mode"]])
+        self._pin = Pin.init(config["pin"], mode=ESP32GPIO._mode_map[config["mode"]])
 
     def set_pin(self, value):
         self._pin(value)
@@ -38,17 +38,35 @@ class ESP32I2C(mcu.I2C):
 
 
 class ESP32SPI(mcu.SPI):
+    _default_io_pins = {
+        1: {
+            "sck": 14,
+            "mosi": 13,
+            "miso": 12
+        },
+        2: {
+            "sck": 18,
+            "mosi": 23,
+            "miso": 19
+        }
+    }
     def __init__(self, config=None):
         super().__init__(config=config)
 
-    def read_bytes(self, count):
-        raise
+        self._spi = SPI(config["id"],
+                        config["baudrate"],
+                        sck=Pin(config.get("sck", ESP32SPI._default_io_pins[config["id"]]["sck"])),
+                        mosi=Pin(config.get("mosi", ESP32SPI._default_io_pins[config["id"]]["mosi"])),
+                        miso=Pin(config.get("miso", ESP32SPI._default_io_pins[config["id"]]["miso"])))
 
-    def write_bytes(self, data, count):
-        raise
+    def read_bytes(self, count):
+        return self._spi.read(count)
+
+    def write_bytes(self, data):
+        return self._spi.write(data)
 
     def close(self):
-        raise
+        self._spi.deinit()
 
 
 class ESP32uPy(mcu.MCU):

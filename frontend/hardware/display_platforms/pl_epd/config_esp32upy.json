@@ -46,8 +46,11 @@
     },
     "SPI": {
       "EPSON": {
-        "id": 0,
-        "baudrate": 1000000
+        "id": 1,
+        "baudrate": 1000000,
+        "sck": 5,
+        "mosi": 18,
+        "miso": 19
       }
     },
     "I2C": {
