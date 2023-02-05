@@ -4,12 +4,12 @@
       "HVSW_CTRL": {
         "pin": 26,
         "mode": "OUT",
-        "init": "INIT_L"
+        "value": 0
       },
       "PMIC_EN": {
         "pin": 25,
         "mode": "OUT",
-        "init": "INIT_L"
+        "value": 0
       },
       "PMIC_POK": {
         "pin": 34,
@@ -22,12 +22,12 @@
       "EPSON_HIRQ": {
         "pin": 36,
         "mode": "IN",
-        "init": "PU"
+        "pull": "PULL_UP"
       },
       "EPSON_HDC": {
         "pin": 4,
         "mode": "OUT",
-        "init": "INIT_H"
+        "value": 1
       },
       "HRDY": {
         "pin": 13,
@@ -36,18 +36,28 @@
       "RESET": {
         "pin": 27,
         "mode": "OUT",
-        "init": "INIT_H"
+        "value": 1
       },
       "CS_0": {
         "pin": 15,
         "mode": "OUT",
-        "init": "INIT_H"
+        "value": 1
+      },
+      "VCC_EN": {
+        "pin": 32,
+        "mode": "OUT",
+        "value": 1
+      },
+      "CLK_EN": {
+        "pin": 33,
+        "mode": "OUT",
+        "value": 1
       }
     },
     "SPI": {
       "EPSON": {
         "id": 1,
-        "baudrate": 1000000,
+        "baudrate": 400000,
         "sck": 5,
         "mosi": 18,
         "miso": 19
@@ -56,7 +66,7 @@
     "I2C": {
       "EPSON": {
         "id": 0,
-        "freq": 400000
+        "frequency": 400000
       }
     }
   }

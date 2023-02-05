@@ -1,20 +1,34 @@
 from hardware.mcu import mcu
 from machine import Pin, SPI, I2C
+import time
+
 
 # TODO: We can use more low-level commands (if available) for speed
 
 class ESP32GPIO(mcu.GPIO):
     _mode_map = {
         "IN": Pin.IN,
-        "OUT": Pin.OUT
+        "OUT": Pin.OUT,
+        "OPEN_DRAIN": Pin.OPEN_DRAIN
+    }
+    _pull_map = {
+        None: None,
+        "PULL_UP": Pin.PULL_UP,
+        "PULL_DOWN": Pin.PULL_DOWN
     }
 
     def __init__(self, config=None):
         super().__init__(config=config)
-        self._pin = Pin(config["pin"], mode=ESP32GPIO._mode_map[config["mode"]])
+        self._pin = Pin(config["pin"],
+                        mode=ESP32GPIO._mode_map.get(config.get("mode"), -1),
+                        pull=ESP32GPIO._pull_map.get(config.get("pull"), -1),
+                        value=config.get("value"))
 
     def configure_pin(self, config):
-        self._pin = Pin.init(config["pin"], mode=ESP32GPIO._mode_map[config["mode"]])
+        self._pin = Pin.init(config["pin"],
+                             mode=ESP32GPIO._mode_map[config.get("mode", -1)],
+                             pull=ESP32GPIO._pull_map[config.get("pull")],
+                             value=config.get("value"))
 
     def set_pin(self, value):
         self._pin(value)
@@ -24,14 +38,38 @@ class ESP32GPIO(mcu.GPIO):
 
 
 class ESP32I2C(mcu.I2C):
+    _default_io_pins = {
+        0: {
+            "scl": 18,
+            "sda": 19
+        },
+        1: {
+            "scl": 25,
+            "sda": 26
+        }
+    }
+
     def __init__(self, config=None):
         super().__init__(config=config)
+        self._i2c = I2C(config["id"],
+                        freq=config["frequency"],
+                        scl=Pin(config.get("scl", ESP32I2C._default_io_pins[config["id"]]["scl"])),
+                        sda=Pin(config.get("sda", ESP32I2C._default_io_pins[config["id"]]["sda"])))
 
-    def read_bytes(self):
-        raise
+    def read_bytes(self, addr, reg, nbytes):
+        if reg:
+            return self._i2c.readfrom_mem(addr, reg, nbytes)
+        else:
+            return self._i2c.readfrom(addr, nbytes)
 
-    def write_bytes(self):
-        raise
+    def write_bytes(self, addr, reg, data):
+        if reg:
+            return self._i2c.writeto_mem(addr, reg, data)
+        else:
+            return self._i2c.writeto(addr, data)
+
+    def scan(self):
+        return self._i2c.scan()
 
     def close(self):
         raise
@@ -50,6 +88,7 @@ class ESP32SPI(mcu.SPI):
             "miso": 19
         }
     }
+
     def __init__(self, config=None):
         super().__init__(config=config)
 
@@ -59,8 +98,8 @@ class ESP32SPI(mcu.SPI):
                         mosi=Pin(config.get("mosi", ESP32SPI._default_io_pins[config["id"]]["mosi"])),
                         miso=Pin(config.get("miso", ESP32SPI._default_io_pins[config["id"]]["miso"])))
 
-    def read_bytes(self, count):
-        return self._spi.read(count)
+    def read_bytes(self, nbytes):
+        return self._spi.read(nbytes)
 
     def write_bytes(self, data):
         return self._spi.write(data)
@@ -85,4 +124,14 @@ class ESP32uPy(mcu.MCU):
     def get_i2c_impl(cls):
         return ESP32I2C
 
+    @staticmethod
+    def ticks_ms():
+        return time.ticks_ms()
 
+    @staticmethod
+    def ticks_diff(start, end):
+        return time.ticks_diff(start, end)
+
+    @staticmethod
+    def sleep_ms():
+        return time.sleep_ms()

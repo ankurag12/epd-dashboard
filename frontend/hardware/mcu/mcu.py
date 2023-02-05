@@ -1,3 +1,8 @@
+from utils.logging import Logger
+
+logger = Logger(__name__)
+
+
 class GPIO:
     def __init__(self, config=None):
         self._config = config
@@ -13,7 +18,7 @@ class SPI:
     def __init__(self, config=None):
         self._config = config
 
-    def write_bytes(self, data, count):
+    def write_bytes(self, data):
         raise NotImplementedError
 
     def read_bytes(self, count):
@@ -27,10 +32,10 @@ class I2C:
     def __init__(self, config=None):
         self._config = config
 
-    def write_bytes(self):
+    def write_bytes(self, addr, reg, data):
         raise NotImplementedError
 
-    def read_bytes(self):
+    def read_bytes(self, addr, reg, nbytes):
         raise NotImplementedError
 
     def close(self):
@@ -39,6 +44,8 @@ class I2C:
 
 class MCU:
     def __init__(self, hw_config=None):
+        logger.info(f"MCU Config:\n{hw_config}")
+
         self._spi = dict()
         self._i2c = dict()
         self._gpio = dict()
@@ -58,6 +65,18 @@ class MCU:
     @property
     def gpio(self):
         return self._gpio
+
+    @staticmethod
+    def sleep_ms():
+        raise NotImplementedError
+
+    @staticmethod
+    def ticks_ms():
+        raise NotImplementedError
+
+    @staticmethod
+    def ticks_diff(start, end):
+        raise NotImplementedError
 
     @classmethod
     def get_spi_impl(cls):

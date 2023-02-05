@@ -1,6 +1,9 @@
+# Base class for a generic display platform.
+# It could be EPD, LCD, whatever
+
 class DisplayPlatform:
-    def __init__(self, hw_config=None):
-        self._hw_config = hw_config
+    def __init__(self, mcu, **kwargs):
+        self._mcu = mcu
 
     def clear(self):
         raise NotImplementedError
