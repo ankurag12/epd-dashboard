@@ -1,5 +1,6 @@
 from utils.logging import Logger
 from hardware.display_platforms.pl_epd.pmic.common import PMIC
+from collections import OrderedDict
 
 logger = Logger(__name__)
 
@@ -10,7 +11,7 @@ class Max17135(PMIC):
 
     HVPMIC_TIMING_SEQ = {
         # HVPMIC MAX17135 timings for Type4 Display (Maxim Drivers)
-        0: {
+        0: OrderedDict({
             "UP_VGNEG": 24,
             "UP_VSNEG": 7,
             "UP_VSPOS": 2,
@@ -19,9 +20,9 @@ class Max17135(PMIC):
             "DOWN_VSPOS": 14,
             "DOWN_VSNEG": 12,
             "DOWN_VGNEG": 2
-        },
+        }),
         # HVPMIC MAX17135 timings for Type11 Display (ST Drivers)
-        1: {
+        1: OrderedDict({
             "UP_VGNEG": 12,
             "UP_VSNEG": 7,
             "UP_VSPOS": 2,
@@ -30,7 +31,7 @@ class Max17135(PMIC):
             "DOWN_VSPOS": 14,
             "DOWN_VSNEG": 12,
             "DOWN_VGNEG": 7
-        }
+        })
     }
 
     class Register:
@@ -66,15 +67,15 @@ class Max17135(PMIC):
         reg = Max17135.Register.HVPMIC_REG_TIMING_1
         i = 0
         for key, val in self._timings.items():
-            self._i2c.write_bytes(self._i2c_addr, reg + i, val)
+            self._i2c.write_byte_numeric(self._i2c_addr, reg + i, val)
             i += 1
 
     def configure(self, vcom_cal, power_sequence):
         self._cal = vcom_cal
         self._timings = Max17135.HVPMIC_TIMING_SEQ[power_sequence]
 
-        self._prod_rev = self._i2c.read_bytes(self._i2c_addr, Max17135.Register.HVPMIC_REG_PROD_REV, 1)
-        self._prod_id = self._i2c.read_bytes(self._i2c_addr, Max17135.Register.HVPMIC_REG_PROD_ID, 1)
+        self._prod_rev = self._i2c.read_byte_numeric(self._i2c_addr, Max17135.Register.HVPMIC_REG_PROD_REV)
+        self._prod_id = self._i2c.read_byte_numeric(self._i2c_addr, Max17135.Register.HVPMIC_REG_PROD_ID)
 
         logger.info(f"PMIC rev: {self._prod_rev} , id: {self._prod_id}")
 
@@ -94,7 +95,7 @@ class Max17135(PMIC):
         elif dac_value > 255:
             dac_value = 255
 
-        self._i2c.write_bytes(self._i2c_addr, Max17135.Register.HVPMIC_REG_DVR, dac_value)
+        self._i2c.write_byte_numeric(self._i2c_addr, Max17135.Register.HVPMIC_REG_DVR, dac_value)
 
     def wait_pok(self):
         raise

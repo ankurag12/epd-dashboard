@@ -20,17 +20,17 @@ class S1D135xx:
     PWR_CTRL_CHECK_ON = 0x2200
 
     class Register:
-        REV_CODE = 0x0002,
-        SOFTWARE_RESET = 0x0008,
-        SYSTEM_STATUS = 0x000A,
-        I2C_CLOCK = 0x001A,
-        PERIPH_CONFIG = 0x0020,
-        HOST_MEM_PORT = 0x0154,
-        I2C_TEMP_SENSOR_VALUE = 0x0216,
-        I2C_STATUS = 0x0218,
-        PWR_CTRL = 0x0230,
-        SEQ_AUTOBOOT_CMD = 0x02A8,
-        DISPLAY_BUSY = 0x0338,
+        REV_CODE = 0x0002
+        SOFTWARE_RESET = 0x0008
+        SYSTEM_STATUS = 0x000A
+        I2C_CLOCK = 0x001A
+        PERIPH_CONFIG = 0x0020
+        HOST_MEM_PORT = 0x0154
+        I2C_TEMP_SENSOR_VALUE = 0x0216
+        I2C_STATUS = 0x0218
+        PWR_CTRL = 0x0230
+        SEQ_AUTOBOOT_CMD = 0x02A8
+        DISPLAY_BUSY = 0x0338
         INT_RAW_STAT = 0x033A
 
     RotMode = {
@@ -41,25 +41,25 @@ class S1D135xx:
     }
 
     class CMD:
-        INIT_SET = 0x00,
-        RUN = 0x02,
-        STBY = 0x04,
-        SLEEP = 0x05,
-        INIT_STBY = 0x06,
-        INIT_ROT_MODE = 0x0B,
-        READ_REG = 0x10,
-        WRITE_REG = 0x11,
-        BST_RD_SDR = 0x1C,
-        BST_WR_SDR = 0x1D,
-        BST_END_SDR = 0x1E,
-        LD_IMG = 0x20,
-        LD_IMG_AREA = 0x22,
-        LD_IMG_END = 0x23,
-        WAIT_DSPE_TRG = 0x28,
-        WAIT_DSPE_FREND = 0x29,
-        UPD_INIT = 0x32,
-        UPDATE_FULL = 0x33,
-        UPDATE_FULL_AREA = 0x34,
+        INIT_SET = 0x00
+        RUN = 0x02
+        STBY = 0x04
+        SLEEP = 0x05
+        INIT_STBY = 0x06
+        INIT_ROT_MODE = 0x0B
+        READ_REG = 0x10
+        WRITE_REG = 0x11
+        BST_RD_SDR = 0x1C
+        BST_WR_SDR = 0x1D
+        BST_END_SDR = 0x1E
+        LD_IMG = 0x20
+        LD_IMG_AREA = 0x22
+        LD_IMG_END = 0x23
+        WAIT_DSPE_TRG = 0x28
+        WAIT_DSPE_FREND = 0x29
+        UPD_INIT = 0x32
+        UPDATE_FULL = 0x33
+        UPDATE_FULL_AREA = 0x34
         EPD_GDRV_CLR = 0x37
 
     def __init__(self, mcu, wflib_file=None):
@@ -68,7 +68,7 @@ class S1D135xx:
         self._spi = mcu.spi["EPSON"]
         self._hdc = mcu.gpio.get("EPSON_HDC")
         self._hrdy = mcu.gpio.get("HRDY")
-        self._cs = mcu.gpio["CS_0"]
+        self._cs = mcu.gpio.get("CS_0")
         self._reset = mcu.gpio.get("RESET")
         self._clk_en = mcu.gpio.get("CLK_EN")
         self._vcc_en = mcu.gpio.get("VCC_EN")
@@ -115,11 +115,9 @@ class S1D135xx:
         self._send_param(S1D135xx.Register.HOST_MEM_PORT)
 
         while lines:
-            x = pixels
-            while x:
-                self._send_param(val16)
-                x -= 1
+            self._send_params([val16] * pixels)
             lines -= 1
+        logger.info(f"Filled all")
 
         self._set_cs(1)
         self._wait_idle()
@@ -160,8 +158,8 @@ class S1D135xx:
                 f.seek(f.tell() + width - (left + area["width"]))
 
     def _transfer_data(self, data):
-        # Data is a byte array in little endian, so we convert it to big endian
-        data = struct.pack('<2h', *struct.unpack('>2h', data))
+        # Data is a byte array in little endian. Target wants word array in big endian
+        data = struct.pack(f"<{len(data)//2}H", *struct.unpack(f">{len(data)//2}H", data))
         self._spi.write_bytes(data)
 
     def _send_cmd_area(self, cmd, mode, area):
@@ -181,18 +179,18 @@ class S1D135xx:
         self._set_cs(1)
 
     def _send_cmd(self, cmd):
-        cmd = cmd.to_bytes(2, byteorder='big')
+        cmd = cmd.to_bytes(2, "big")
         self._set_hdc(0)
         self._spi.write_bytes(cmd)
         self._set_hdc(1)
 
     def _send_params(self, params):
-        for param in params:
-            self._send_param(param)
+        params = b''.join([param.to_bytes(2, "big") for param in params])
+        self._spi.write_bytes(params)
 
     def _send_param(self, param):
         # param is an integer
-        param = param.to_bytes(2, byteorder="big")
+        param = param.to_bytes(2, "big")
         self._spi.write_bytes(param)
 
     def _set_cs(self, state):
@@ -206,12 +204,11 @@ class S1D135xx:
     def _wf_mode(cls, wf):
         return (wf << 8) & 0x0F00
 
-    def _wait_idle(self, timeout=1.0):
+    def _wait_idle(self, timeout_ms=1000):
         start = self._mcu.ticks_ms()
         while not self._get_hrdy():
-            if self._mcu.ticks_diff(self._mcu.ticks_ms(), start) > timeout:
-                logger.warning(f"HRDY timeout")
-                return
+            if self._mcu.ticks_diff(self._mcu.ticks_ms(), start) > timeout_ms:
+                raise RuntimeError(f"HRDY timeout")
             self._mcu.sleep_ms(1)
 
     def _early_init(self):
@@ -238,6 +235,7 @@ class S1D135xx:
             raise ValueError(f"Invalid product code, expected {ref_code}")
 
     def _load_init_code(self):
+        self._wait_idle()
         self._set_cs(0)
         self._send_cmd(S1D135xx.CMD.INIT_SET)
         with open(self._init_code_file, "rb") as f:
@@ -255,12 +253,14 @@ class S1D135xx:
         self._wait_idle()
 
         checksum = self._read_reg(S1D135xx.Register.SEQ_AUTOBOOT_CMD)
+        logger.info(f"Checksum = {checksum}")
 
         if not (checksum & S1D135xx.INIT_CODE_CHECKSUM_OK):
             raise ValueError(f"Init code checksum error")
 
     def _load_wflib(self, wflib, addr):
-        size2 = wflib.size // 2
+        # os.stat returns a tuple. 7th element is the size
+        size2 = os.stat(wflib)[6] // 2
 
         self._wait_idle()
 
@@ -391,7 +391,7 @@ class S1D135xx:
 
     def wait_update_end(self):
         self._send_cmd_cs(S1D135xx.CMD.WAIT_DSPE_FREND)
-        self._wait_idle()
+        self._wait_idle(timeout_ms=5000)
 
     def _set_power_state(self, state):
         self._set_cs(1)
@@ -449,13 +449,13 @@ class S1D135xx:
         val = self._spi.read_bytes(2)
         val = self._spi.read_bytes(2)
         self._cs.set_pin(1)
-        return int.from_bytes(val, byteorder="big")
+        return int.from_bytes(val, "big")
 
     def _write_reg(self, reg, val):
         self._cs.set_pin(0)
         self._send_cmd(S1D135xx.CMD.WRITE_REG)
-        reg = reg.to_bytes(2, byteorder='big')
-        val = val.to_bytes(2, byteorder="big")
+        reg = reg.to_bytes(2, 'big')
+        val = val.to_bytes(2, "big")
         self._spi.write_bytes(reg + val)
         self._cs.set_pin(1)
 

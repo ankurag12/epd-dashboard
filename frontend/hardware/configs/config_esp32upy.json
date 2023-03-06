@@ -29,10 +29,6 @@
         "mode": "OUT",
         "value": 1
       },
-      "HRDY": {
-        "pin": 13,
-        "mode": "IN"
-      },
       "RESET": {
         "pin": 27,
         "mode": "OUT",
@@ -57,7 +53,7 @@
     "SPI": {
       "EPSON": {
         "id": 1,
-        "baudrate": 400000,
+        "baudrate": 4000000,
         "sck": 5,
         "mosi": 18,
         "miso": 19
@@ -66,7 +62,9 @@
     "I2C": {
       "EPSON": {
         "id": 0,
-        "frequency": 400000
+        "frequency": 400000,
+        "scl": 22,
+        "sda": 23
       }
     }
   }

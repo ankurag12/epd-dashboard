@@ -27,17 +27,17 @@ class S1D13524(S1D135xx):
     CTLR_PROCESSED_TRIPLE = 0x0002
 
     class Register:
-        POWER_SAVE_MODE = 0x0006,
-        FRAME_DATA_LENGTH = 0x0300,
-        LINE_DATA_LENGTH = 0x0306,
-        TEMP_AUTO_RETRIEVE = 0x0320,
-        TEMP = 0x0322,
-        WF_ADDR_0 = 0x0390,
+        POWER_SAVE_MODE = 0x0006
+        FRAME_DATA_LENGTH = 0x0300
+        LINE_DATA_LENGTH = 0x0306
+        TEMP_AUTO_RETRIEVE = 0x0320
+        TEMP = 0x0322
+        WF_ADDR_0 = 0x0390
         WF_ADDR_1 = 0x0392
 
     class CMD:
-        INIT_PLL = 0x01,
-        INIT_CTLR_MODE = 0x0E,
+        INIT_PLL = 0x01
+        INIT_CTLR_MODE = 0x0E
         RD_WF_INFO = 0x30
 
     wf_table = {
@@ -158,6 +158,7 @@ class S1D13524(S1D135xx):
         self._wait_idle()
         self._write_reg(S1D13524.Register.POWER_SAVE_MODE, 0x0)
         self._write_reg(S1D135xx.Register.I2C_CLOCK, S1D13524.I2C_CLOCK_DIV)
+        self._wait_idle()
 
     def init_ctlr_mode(self):
         params = [

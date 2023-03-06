@@ -39,7 +39,7 @@ class I2C:
         raise NotImplementedError
 
     def close(self):
-        raise
+        raise NotImplementedError
 
 
 class MCU:
@@ -67,7 +67,7 @@ class MCU:
         return self._gpio
 
     @staticmethod
-    def sleep_ms():
+    def sleep_ms(ms):
         raise NotImplementedError
 
     @staticmethod

@@ -1,7 +1,9 @@
 from hardware.mcu import mcu
 from machine import Pin, SPI, I2C
 import time
+from utils.logging import Logger
 
+logger = Logger(__name__)
 
 # TODO: We can use more low-level commands (if available) for speed
 
@@ -62,17 +64,29 @@ class ESP32I2C(mcu.I2C):
         else:
             return self._i2c.readfrom(addr, nbytes)
 
+    def read_byte_numeric(self, addr, reg):
+        return self.read_bytes(addr, reg, 1)[0]
+
     def write_bytes(self, addr, reg, data):
         if reg:
             return self._i2c.writeto_mem(addr, reg, data)
         else:
             return self._i2c.writeto(addr, data)
 
+    def write_byte_numeric(self, addr, reg, data):
+        """Write a numeric value"""
+        if not isinstance(data, int):
+            raise ValueError(f"data should be of type int")
+        # byteorder doesn't matter for 1 byte but is required position argument
+        data = data.to_bytes(1, "big")
+        self.write_bytes(addr, reg, data)
+
     def scan(self):
         return self._i2c.scan()
 
     def close(self):
-        raise
+        logger.info(f"Closing I2C")
+        return
 
 
 class ESP32SPI(mcu.SPI):
@@ -105,6 +119,7 @@ class ESP32SPI(mcu.SPI):
         return self._spi.write(data)
 
     def close(self):
+        logger.info(f"Closing SPI")
         self._spi.deinit()
 
 
@@ -133,5 +148,5 @@ class ESP32uPy(mcu.MCU):
         return time.ticks_diff(start, end)
 
     @staticmethod
-    def sleep_ms():
-        return time.sleep_ms()
+    def sleep_ms(ms):
+        return time.sleep_ms(ms)
