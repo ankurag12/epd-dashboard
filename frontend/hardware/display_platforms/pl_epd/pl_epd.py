@@ -112,19 +112,19 @@ class PlEpd(DisplayPlatform):
 
         logger.info(f"Initialized EPDC")
 
-    def show_image(self):
-        raise NotImplementedError
+    def show_image(self, img_path, area=None, left=0, top=0):
+        self._epdc.load_image(img_path, area=area, left=left, top=top)
+        self._epdc.update_temp()
+        self._psu.on()
+        self._epdc.update("refresh", area=area)
+        self._epdc.wait_update_end()
+        self._psu.off()
 
     def clear(self):
         logger.info(f"Clearing the screen")
         self._epdc.fill(None, 255)
-
         self._epdc.clear_init()
-
         self._psu.on()
-
         self._epdc.update("init", area=None)
-
         self._epdc.wait_update_end()
-
         self._psu.off()

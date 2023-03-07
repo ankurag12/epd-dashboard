@@ -141,25 +141,24 @@ class S1D135xx:
         if width < area["width"] or width < (left + area["width"]):
             raise ValueError("Invalid combination of width/left/area")
 
-        with open(file, "rb") as f:
-            # First ignore the top cropped area
-            f.seek(top * width)
-            for line in range(area["height"], -1, -1):
-                # Find the first relevant pixel (byte) on this line
-                f.seek(left + f.tell())
+        # First ignore the top cropped area
+        file.seek(top * width)
+        for line in range(area["height"], -1, -1):
+            # Find the first relevant pixel (byte) on this line
+            file.seek(left + file.tell())
 
-                # Transfer data of interest in chunks
-                chunk = f.read(S1D135xx.DATA_BUFFER_LENGTH)
-                while chunk:
-                    self._transfer_data(chunk)
-                    chunk = f.read(S1D135xx.DATA_BUFFER_LENGTH)
+            # Transfer data of interest in chunks
+            chunk = file.read(S1D135xx.DATA_BUFFER_LENGTH)
+            while chunk:
+                self._transfer_data(chunk)
+                chunk = file.read(S1D135xx.DATA_BUFFER_LENGTH)
 
-                # Move file pointer to end of line
-                f.seek(f.tell() + width - (left + area["width"]))
+            # Move file pointer to end of line
+            file.seek(file.tell() + width - (left + area["width"]))
 
     def _transfer_data(self, data):
         # Data is a byte array in little endian. Target wants word array in big endian
-        data = struct.pack(f"<{len(data)//2}H", *struct.unpack(f">{len(data)//2}H", data))
+        data = struct.pack(f"<{len(data) // 2}H", *struct.unpack(f">{len(data) // 2}H", data))
         self._spi.write_bytes(data)
 
     def _send_cmd_area(self, cmd, mode, area):

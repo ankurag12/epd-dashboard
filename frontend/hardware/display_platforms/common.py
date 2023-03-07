@@ -8,5 +8,5 @@ class DisplayPlatform:
     def clear(self):
         raise NotImplementedError
 
-    def show_image(self):
+    def show_image(self, img_path, **kwargs):
         raise NotImplementedError

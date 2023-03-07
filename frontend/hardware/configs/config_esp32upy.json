@@ -53,7 +53,7 @@
     "SPI": {
       "EPSON": {
         "id": 1,
-        "baudrate": 4000000,
+        "baudrate": 20000000,
         "sck": 5,
         "mosi": 18,
         "miso": 19

@@ -12,7 +12,7 @@ def pnm_read_header(pnm_file):
     }
     tokens = list()
     while len(tokens) < 3:
-        line = pnm_file.readline().decode().strip().split("#")
+        line = pnm_file.readline().decode().strip().split("#")[0].strip()
         if not line:
             continue
         tokens += line.split()
@@ -31,9 +31,9 @@ def pnm_read_header(pnm_file):
         try:
             hdr["max_gray"] = int(tokens[3])
         except IndexError:
-            max_gray = pnm_file.readline().decode().strip().split("#")
+            max_gray = pnm_file.readline().decode().strip().split("#")[0].strip()
             while not max_gray:
-                max_gray = pnm_file.readline().decode().strip().split("#")
-            hdr["max_gray"] = max_gray
+                max_gray = pnm_file.readline().decode().strip().split("#")[0].strip()
+            hdr["max_gray"] = int(max_gray)
 
     return hdr
