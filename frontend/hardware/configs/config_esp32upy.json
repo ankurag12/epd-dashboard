@@ -25,7 +25,7 @@
         "pull": "PULL_UP"
       },
       "EPSON_HDC": {
-        "pin": 4,
+        "pin": 15,
         "mode": "OUT",
         "value": 1
       },
@@ -35,17 +35,17 @@
         "value": 1
       },
       "CS_0": {
-        "pin": 15,
+        "pin": 33,
         "mode": "OUT",
         "value": 1
       },
       "VCC_EN": {
-        "pin": 32,
+        "pin": 21,
         "mode": "OUT",
         "value": 1
       },
       "CLK_EN": {
-        "pin": 33,
+        "pin": 32,
         "mode": "OUT",
         "value": 1
       }

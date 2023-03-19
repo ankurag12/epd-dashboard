@@ -1,7 +1,7 @@
 import struct
 from utils.logging import Logger
+from utils.misc import ImageFile
 import os
-from hardware.display_platforms.utils import pnm_read_header
 
 logger = Logger(__name__)
 
@@ -9,7 +9,7 @@ logger = Logger(__name__)
 class S1D135xx:
     TEMP_MASK = 0x00FF
 
-    DATA_BUFFER_LENGTH = 512
+    DATA_BUFFER_LENGTH = 4096
 
     XMASK = 0x0FFF
     YMASK = 0x0FFF
@@ -142,16 +142,20 @@ class S1D135xx:
             raise ValueError("Invalid combination of width/left/area")
 
         # First ignore the top cropped area
-        file.seek(top * width)
-        for line in range(area["height"], -1, -1):
+        file.seek(file.tell() + top * width)
+
+        for line in range(area["height"] - 1, -1, -1):
+            remaining = area["width"]
+
             # Find the first relevant pixel (byte) on this line
             file.seek(left + file.tell())
 
             # Transfer data of interest in chunks
-            chunk = file.read(S1D135xx.DATA_BUFFER_LENGTH)
-            while chunk:
+            while remaining:
+                read_count = min(remaining, S1D135xx.DATA_BUFFER_LENGTH)
+                chunk = file.read(read_count)
                 self._transfer_data(chunk)
-                chunk = file.read(S1D135xx.DATA_BUFFER_LENGTH)
+                remaining -= read_count
 
             # Move file pointer to end of line
             file.seek(file.tell() + width - (left + area["width"]))
@@ -346,8 +350,8 @@ class S1D135xx:
         self._send_cmd_cs(S1D135xx.CMD.LD_IMG_END)
 
     def _load_image(self, path, mode, bpp, area=None, left=0, top=0):
-        with open(path, "rb") as img_file:
-            hdr = pnm_read_header(img_file)
+        with ImageFile(path) as img_file:
+            hdr = img_file.pnm_read_header()
 
             self._set_cs(0)
 
