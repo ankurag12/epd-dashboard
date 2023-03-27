@@ -1,4 +1,3 @@
-
 import instaloader
 import concurrent.futures
 import os
@@ -6,18 +5,27 @@ import threading
 
 
 class ImageRepoBuilder:
-    def __init__(self, dest_dir, instagram=None, twitter=None, urls=None):
+    def __init__(self, dest_dir, instagram=None, twitter=None, mms=None, urls=None):
         if isinstance(instagram, str):
             instagram = [instagram]
         if isinstance(twitter, str):
             twitter = [twitter]
+        if isinstance(mms, str):
+            mms = [mms]
         self._instagram = instagram
         self._twitter = twitter
         self._urls = urls
+        self._mms = mms
+
+        if not dest_dir:
+            dest_dir = os.path.join(os.path.dirname(__file__), "image_repo")
+
         self._dest_dir = dest_dir
 
     def update_repo(self):
-        pass
+        self.download_from_instagram()
+        self.download_from_twitter()
+        self.download_from_urls()
 
     def download_from_instagram(self, n=10):
         insta_loader = instaloader.Instaloader()
@@ -45,6 +53,12 @@ class ImageRepoBuilder:
             for user in self._instagram:
                 executor.submit(_download_from_instagram_profile, user)
 
-    def download_from_twitter(self):
+    def download_from_twitter(self, n=10):
+        pass
+
+    def download_from_urls(self):
+        pass
+
+    def download_from_mms(self):
         pass
 

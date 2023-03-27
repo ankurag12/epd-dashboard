@@ -1,0 +1,3 @@
+Pillow
+instaloader
+tweepy
