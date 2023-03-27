@@ -1,0 +1,71 @@
+{
+  "MCU": {
+    "GPIO": {
+      "HVSW_CTRL": {
+        "pin": 26,
+        "mode": "OUT",
+        "value": 0
+      },
+      "PMIC_EN": {
+        "pin": 25,
+        "mode": "OUT",
+        "value": 0
+      },
+      "PMIC_POK": {
+        "pin": 34,
+        "mode": "IN"
+      },
+      "PMIC_FLT": {
+        "pin": 39,
+        "mode": "IN"
+      },
+      "EPSON_HIRQ": {
+        "pin": 36,
+        "mode": "IN",
+        "pull": "PULL_UP"
+      },
+      "EPSON_HDC": {
+        "pin": 15,
+        "mode": "OUT",
+        "value": 1
+      },
+      "RESET": {
+        "pin": 27,
+        "mode": "OUT",
+        "value": 1
+      },
+      "CS_0": {
+        "pin": 33,
+        "mode": "OUT",
+        "value": 1
+      },
+      "VCC_EN": {
+        "pin": 21,
+        "mode": "OUT",
+        "value": 1
+      },
+      "CLK_EN": {
+        "pin": 32,
+        "mode": "OUT",
+        "value": 1
+      }
+    },
+    "SPI": {
+      "EPSON": {
+        "id": 1,
+        "baudrate": 20000000,
+        "sck": 5,
+        "mosi": 18,
+        "miso": 19
+      }
+    },
+    "I2C": {
+      "EPSON": {
+        "id": 0,
+        "frequency": 400000,
+        "scl": 22,
+        "sda": 23
+      }
+    }
+  }
+}
