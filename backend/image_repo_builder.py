@@ -2,6 +2,9 @@ import instaloader
 import concurrent.futures
 import os
 import threading
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ImageRepoBuilder:
@@ -19,6 +22,8 @@ class ImageRepoBuilder:
 
         if not dest_dir:
             dest_dir = os.path.join(os.path.dirname(__file__), "image_repo")
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir, exist_ok=True)
 
         self._dest_dir = dest_dir
 
@@ -39,8 +44,8 @@ class ImageRepoBuilder:
 
             for post in posts:
                 if post.typename == 'GraphImage':
-                    file_name = os.path.join(self._dest_dir, f"instagram_{post.owner_username}_{post.date_utc}.jpg")
-                    if os.path.exists(file_name):
+                    file_name = os.path.join(self._dest_dir, f"instagram_{post.owner_username}_{post.date_utc}")
+                    if os.path.exists(f"{file_name}.jpg"):
                         continue
                     with lock:
                         if count < n:
@@ -50,6 +55,7 @@ class ImageRepoBuilder:
                             break
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(self._instagram)) as executor:
+            logger.info("Pulling from Instagram...")
             for user in self._instagram:
                 executor.submit(_download_from_instagram_profile, user)
 
@@ -61,4 +67,3 @@ class ImageRepoBuilder:
 
     def download_from_mms(self):
         pass
-
