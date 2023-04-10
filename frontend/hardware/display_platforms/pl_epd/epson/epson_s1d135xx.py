@@ -9,7 +9,7 @@ logger = Logger(__name__)
 class S1D135xx:
     TEMP_MASK = 0x00FF
 
-    DATA_BUFFER_LENGTH = 4096
+    DATA_BUFFER_LENGTH = 2048
 
     XMASK = 0x0FFF
     YMASK = 0x0FFF
@@ -235,7 +235,7 @@ class S1D135xx:
         logger.info(f"Product code : {prod_code}")
 
         if prod_code != ref_code:
-            raise ValueError(f"Invalid product code, expected {ref_code}")
+            raise ValueError(f"Invalid product code, expected {ref_code}, got {prod_code}")
 
     def _load_init_code(self):
         self._wait_idle()
@@ -394,7 +394,7 @@ class S1D135xx:
 
     def wait_update_end(self):
         self._send_cmd_cs(S1D135xx.CMD.WAIT_DSPE_FREND)
-        self._wait_idle(timeout_ms=5000)
+        self._wait_idle(timeout_ms=10000)
 
     def _set_power_state(self, state):
         self._set_cs(1)

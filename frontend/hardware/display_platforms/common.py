@@ -5,6 +5,10 @@ class DisplayPlatform:
     def __init__(self, mcu, **kwargs):
         self._mcu = mcu
 
+    @property
+    def mcu(self):
+        return self._mcu
+
     def clear(self):
         raise NotImplementedError
 

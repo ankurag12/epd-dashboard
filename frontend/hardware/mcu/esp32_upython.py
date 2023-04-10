@@ -1,11 +1,16 @@
 from hardware.mcu import mcu
-from machine import Pin, SPI, I2C
+from machine import Pin, SPI, I2C, deepsleep, lightsleep, TouchPad
+import esp32
+import json
+import network
 import time
 from utils.logging import Logger
 
 logger = Logger(__name__)
 
+
 # TODO: We can use more low-level commands (if available) for speed
+
 
 class ESP32GPIO(mcu.GPIO):
     _mode_map = {
@@ -37,6 +42,86 @@ class ESP32GPIO(mcu.GPIO):
 
     def get_pin(self):
         return self._pin()
+
+
+class ESP32Touch(mcu.Touch):
+    def __init__(self, config=None):
+        super().__init__(config=config)
+        self._pin = TouchPad(Pin(config["pin"]))
+        self._pin.config(config["thresh"])
+
+    def read(self):
+        return self._pin.read()
+
+    def config(self, val):
+        return self._pin.config(val)
+
+
+class ESP32Power(mcu.Power):
+    def __init__(self, config=None):
+        super().__init__(config=config)
+        self.wake_on_touch(config.get("wake_on_touch", False))
+
+    def deep_sleep(self, time_ms=-1):
+        if time_ms > 0:
+            logger.info(f"Going to deep sleep for {time_ms / 1000} seconds")
+            return deepsleep(time_ms)
+        else:
+            logger.info(f"Going to deep sleep indefinitely")
+            return deepsleep()
+
+    def light_sleep(self, time_ms=-1):
+        if time_ms > 0:
+            logger.info(f"Going to light sleep for {time_ms / 1000} seconds")
+            return lightsleep(time_ms)
+        else:
+            logger.info(f"Going to light sleep indefinitely")
+            return lightsleep()
+
+    def wake_on_touch(self, wake):
+        esp32.wake_on_touch(wake)
+
+
+class ESP32Network(mcu.Network):
+    def __init__(self, config=None):
+        super().__init__(config=config)
+        self._wlan = network.WLAN(network.STA_IF)
+        self._retries = 0
+        if config.get("auto_connect"):
+            wifi_cred = config.get("wifi_credentials")
+            if wifi_cred:
+                if isinstance(wifi_cred, str):
+                    with open(wifi_cred, "r") as f:
+                        wifi_cred = json.load(f)
+                self.connect(wifi_cred.get("SSID"), wifi_cred.get("Password"))
+            else:
+                self.connect()
+
+    def connect(self, ssid=None, password=None):
+        self._wlan.active(True)
+        if not self._wlan.isconnected():
+            logger.info(f'Connecting to network {ssid}...')
+            try:
+                if ssid and password:
+                    self._wlan.connect(ssid, password)
+                else:
+                    self._wlan.connect()
+                while not self._wlan.isconnected():
+                    time.sleep(0.1)
+            except OSError as e:
+                if self._retries > 3:
+                    logger.error(f"Could not connect to network {ssid}")
+                    return
+                self._retries += 1
+                self.disconnect()
+                self.connect(ssid=ssid, password=password)
+
+        logger.info(f"Network config:\n{self._wlan.ifconfig()}")
+        self._retries = 0
+
+    def disconnect(self):
+        self._wlan.disconnect()
+        self._wlan.active(False)
 
 
 class ESP32I2C(mcu.I2C):
@@ -138,6 +223,18 @@ class ESP32uPy(mcu.MCU):
     @classmethod
     def get_i2c_impl(cls):
         return ESP32I2C
+
+    @classmethod
+    def get_touch_impl(cls):
+        return ESP32Touch
+
+    @classmethod
+    def get_power_impl(cls):
+        return ESP32Power
+
+    @classmethod
+    def get_network_impl(cls):
+        return ESP32Network
 
     @staticmethod
     def ticks_ms():

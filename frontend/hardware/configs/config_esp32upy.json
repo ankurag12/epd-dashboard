@@ -66,6 +66,19 @@
         "scl": 22,
         "sda": 23
       }
+    },
+    "TOUCH": {
+      "HOME": {
+        "pin": 14,
+        "thresh": 500
+      }
+    },
+    "POWER": {
+      "wake_on_touch": true
+    },
+    "NETWORK": {
+      "wifi_credentials": "/wifi.json",
+      "auto_connect": true
     }
   }
 }

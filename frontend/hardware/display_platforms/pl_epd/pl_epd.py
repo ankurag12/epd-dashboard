@@ -60,8 +60,6 @@ class PlEpd(DisplayPlatform):
     def __init__(self, mcu, hw_info=None, disp_info=None, wflib_file=None):
         super().__init__(mcu=mcu)
 
-        self._mcu = mcu
-
         if not hw_info:
             hw_info = PlEpd._HW_INFO_DEFAULT
 
