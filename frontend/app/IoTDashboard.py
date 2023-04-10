@@ -12,13 +12,13 @@ class IoTDashboard(BaseApp):
         self._mcu = self._display_platform.mcu
 
     def run(self, img_path="http://macbook-pro.local/the_image.pgm:8080", update_interval_sec=86400, **kwargs):
-        self._display_platform.clear()
-        time.sleep(3)
+        # self._display_platform.clear()
+        # time.sleep(3)
         while True:
             self._display_platform.show_image(img_path, **kwargs)
             logger.info(f"Updated Image")
             self._mcu.network.disconnect()
-            self._mcu.power.light_sleep(update_interval_sec * 1000)
+            self._mcu.power.deep_sleep(update_interval_sec * 1000)
             logger.info(f"Just woke-up from light sleep")
             self._mcu.network.connect()
 
