@@ -69,8 +69,9 @@ class ImageServer:
 
         # Convert image to PGM
         img = Image.open(next_image).convert('L')
+
         # TODO: Resize keeping aspect ratio
-        img = img.resize((1280, 960), Image.Resampling.LANCZOS)
+        img = img.rotate(90, expand=1).resize((1280, 960), Image.Resampling.LANCZOS)
         img.save(os.path.join(self._repo_dir, "the_image.pgm"))
 
         self._update_queue(min_len=10)
