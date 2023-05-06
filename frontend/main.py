@@ -14,7 +14,7 @@ if __name__ == "__main__":
     display_platform = PlEpd(mcu=mcu)
     app = IoTDashboard(display_platform=display_platform)
     try:
-        app.run(img_path="http://macbook-pro.local/the_image.pgm:8080", update_interval_sec=86400)
+        app.run(img_path="http://raspberrypi.local/the_image.pgm:8080", update_interval_sec=86400)
     except Exception as e:
         logger.error(f"Exception raised:\n{e}")
         mcu.close()

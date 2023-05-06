@@ -48,6 +48,11 @@
         "pin": 32,
         "mode": "OUT",
         "value": 1
+      },
+      "EPSON_HRDY": {
+        "pin": 13,
+        "mode": "IN",
+        "pull": "PULL_DOWN"
       }
     },
     "SPI": {
