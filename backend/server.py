@@ -19,9 +19,9 @@ class ImageServer:
         if not image_sources:
             image_sources = dict()
         self._repo_builder = ImageRepoBuilder(dest_dir=self._repo_dir, **image_sources)
-        self._image_queue = deque()
+        self._image_queue = set()
         self._update_queue()
-        self._next_image = self._update_next_image()
+        self._next_image = self.update_next_image()
 
     def _get_history(self):
         try:
@@ -35,12 +35,6 @@ class ImageServer:
         with open(self._history, "wb") as fh:
             pickle.dump(history, fh)
 
-    def update(self):
-        history = self._get_history()
-        history.add(self._next_image)
-        self._update_history(history)
-        self._update_next_image()
-
     def _update_queue(self, min_len=10, pull_from_sources=True):
         if len(self._image_queue) >= min_len:
             return
@@ -49,7 +43,7 @@ class ImageServer:
         repo = set(glob.glob(os.path.join(self._repo_dir, "*.jpg"))
                    + glob.glob(os.path.join(self._repo_dir, "*.jpeg")))
 
-        self._image_queue.extend(repo - history)
+        self._image_queue |= (repo - history)
 
         # If we're still short on images, pull from internet
         if pull_from_sources and len(self._image_queue) < min_len:
@@ -57,15 +51,15 @@ class ImageServer:
             self._repo_builder.update_repo()
             self._update_queue(min_len=min_len, pull_from_sources=False)
 
-    def _update_next_image(self):
+    def update_next_image(self):
         # Get the next image from the queue
         if len(self._image_queue) == 0:
             logger.error(f"No new images to serve, add more images!")
             return
 
-        next_image = self._image_queue.popleft()
+        next_image = self._image_queue.pop()
         self._next_image = next_image
-        logger.info(f"Next image is: {next_image}")
+        logger.info(f"\nNext image is: {next_image}\n")
 
         # Convert image to PGM
         img = Image.open(next_image).convert('L')
@@ -73,6 +67,10 @@ class ImageServer:
         # TODO: Resize keeping aspect ratio
         img = img.rotate(90, expand=1).resize((1280, 960), Image.Resampling.LANCZOS)
         img.save(os.path.join(self._repo_dir, "the_image.pgm"))
+
+        history = self._get_history()
+        history.add(self._next_image)
+        self._update_history(history)
 
         self._update_queue(min_len=10)
         return next_image
@@ -85,7 +83,7 @@ class ImageRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self) -> None:
         super().do_GET()
         if self.path.endswith("the_image.pgm"):
-            image_server.update()
+            image_server.update_next_image()
 
 
 if __name__ == "__main__":
