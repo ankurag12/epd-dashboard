@@ -82,6 +82,9 @@ class Power:
     def wake_on_touch(self, wake):
         raise NotImplementedError
 
+    def reset_cause(self):
+        raise NotImplementedError
+
 
 class MCU:
     def __init__(self, hw_config=None):

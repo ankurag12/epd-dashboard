@@ -1,9 +1,11 @@
-from hardware.mcu import mcu
-from machine import Pin, SPI, I2C, deepsleep, lightsleep, TouchPad
-import esp32
 import json
-import network
 import time
+
+import esp32
+import machine
+import network
+
+from hardware.mcu import mcu
 from utils.logging import Logger
 
 logger = Logger(__name__)
@@ -14,28 +16,29 @@ logger = Logger(__name__)
 
 class ESP32GPIO(mcu.GPIO):
     _mode_map = {
-        "IN": Pin.IN,
-        "OUT": Pin.OUT,
-        "OPEN_DRAIN": Pin.OPEN_DRAIN
+        "IN": machine.Pin.IN,
+        "OUT": machine.Pin.OUT,
+        "OPEN_DRAIN": machine.Pin.OPEN_DRAIN,
+        -1: -1
     }
     _pull_map = {
         None: None,
-        "PULL_UP": Pin.PULL_UP,
-        "PULL_DOWN": Pin.PULL_DOWN
+        "PULL_UP": machine.Pin.PULL_UP,
+        "PULL_DOWN": machine.Pin.PULL_DOWN,
+        -1: -1
     }
 
     def __init__(self, config=None):
         super().__init__(config=config)
-        self._pin = Pin(config["pin"],
-                        mode=ESP32GPIO._mode_map.get(config.get("mode"), -1),
-                        pull=ESP32GPIO._pull_map.get(config.get("pull"), -1),
-                        value=config.get("value"))
+        self._pin = machine.Pin(config["pin"],
+                                mode=ESP32GPIO._mode_map.get(config.get("mode"), -1),
+                                pull=ESP32GPIO._pull_map.get(config.get("pull"), -1),
+                                value=config.get("value"))
 
     def configure_pin(self, config):
-        self._pin = Pin.init(config["pin"],
-                             mode=ESP32GPIO._mode_map[config.get("mode", -1)],
-                             pull=ESP32GPIO._pull_map[config.get("pull")],
-                             value=config.get("value"))
+        self._pin.init(mode=ESP32GPIO._mode_map[config.get("mode", -1)],
+                       pull=ESP32GPIO._pull_map[config.get("pull")],
+                       value=config.get("value"))
 
     def set_pin(self, value):
         self._pin(value)
@@ -47,7 +50,7 @@ class ESP32GPIO(mcu.GPIO):
 class ESP32Touch(mcu.Touch):
     def __init__(self, config=None):
         super().__init__(config=config)
-        self._pin = TouchPad(Pin(config["pin"]))
+        self._pin = machine.TouchPad(machine.Pin(config["pin"]))
         self._pin.config(config["thresh"])
 
     def read(self):
@@ -65,21 +68,33 @@ class ESP32Power(mcu.Power):
     def deep_sleep(self, time_ms=-1):
         if time_ms > 0:
             logger.info(f"Going to deep sleep for {time_ms / 1000} seconds")
-            return deepsleep(time_ms)
+            return machine.deepsleep(time_ms)
         else:
             logger.info(f"Going to deep sleep indefinitely")
-            return deepsleep()
+            return machine.deepsleep()
 
     def light_sleep(self, time_ms=-1):
         if time_ms > 0:
             logger.info(f"Going to light sleep for {time_ms / 1000} seconds")
-            return lightsleep(time_ms)
+            return machine.lightsleep(time_ms)
         else:
             logger.info(f"Going to light sleep indefinitely")
-            return lightsleep()
+            return machine.lightsleep()
 
     def wake_on_touch(self, wake):
         esp32.wake_on_touch(wake)
+
+    def reset_cause(self):
+        reset_causes = {
+            machine.DEEPSLEEP: "DEEPSLEEP",
+            machine.HARD_RESET: "HARD_RESET",
+            machine.PWRON_RESET: "PWRON_RESET",
+            machine.SOFT_RESET: "SOFT_RESET",
+            machine.DEEPSLEEP_RESET: "DEEPSLEEP_RESET"
+        }
+        reset_cause = machine.reset_cause()
+        logger.info(f"Reset Cause: {reset_cause}")
+        return reset_causes.get(reset_cause, "UNKNOWN")
 
 
 class ESP32Network(mcu.Network):
@@ -138,10 +153,10 @@ class ESP32I2C(mcu.I2C):
 
     def __init__(self, config=None):
         super().__init__(config=config)
-        self._i2c = I2C(config["id"],
-                        freq=config["frequency"],
-                        scl=Pin(config.get("scl", ESP32I2C._default_io_pins[config["id"]]["scl"])),
-                        sda=Pin(config.get("sda", ESP32I2C._default_io_pins[config["id"]]["sda"])))
+        self._i2c = machine.I2C(config["id"],
+                                freq=config["frequency"],
+                                scl=machine.Pin(config.get("scl", ESP32I2C._default_io_pins[config["id"]]["scl"])),
+                                sda=machine.Pin(config.get("sda", ESP32I2C._default_io_pins[config["id"]]["sda"])))
 
     def read_bytes(self, addr, reg, nbytes):
         if reg:
@@ -191,11 +206,11 @@ class ESP32SPI(mcu.SPI):
     def __init__(self, config=None):
         super().__init__(config=config)
 
-        self._spi = SPI(config["id"],
-                        config["baudrate"],
-                        sck=Pin(config.get("sck", ESP32SPI._default_io_pins[config["id"]]["sck"])),
-                        mosi=Pin(config.get("mosi", ESP32SPI._default_io_pins[config["id"]]["mosi"])),
-                        miso=Pin(config.get("miso", ESP32SPI._default_io_pins[config["id"]]["miso"])))
+        self._spi = machine.SPI(config["id"],
+                                config["baudrate"],
+                                sck=machine.Pin(config.get("sck", ESP32SPI._default_io_pins[config["id"]]["sck"])),
+                                mosi=machine.Pin(config.get("mosi", ESP32SPI._default_io_pins[config["id"]]["mosi"])),
+                                miso=machine.Pin(config.get("miso", ESP32SPI._default_io_pins[config["id"]]["miso"])))
 
     def read_bytes(self, nbytes):
         return self._spi.read(nbytes)
