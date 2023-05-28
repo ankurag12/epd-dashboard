@@ -95,7 +95,7 @@ class PlEpd(DisplayPlatform):
             self._psu = EpdPsuEPDC(self._epdc)
         else:
             self._psu = EpdPsuGPIO(self._mcu)
-        logger.info(f"Initialized EPD PSU")
+        logger.info(f"Initialized EPD PSU", to_file=True)
 
     def _init_epdc(self):
         if self._hw_info["board"]["epdc_ref"] == "EPDC_S1D13524":
@@ -108,7 +108,7 @@ class PlEpd(DisplayPlatform):
 
         logger.info(f"Ready {self._epdc.xres}x{self._epdc.yres}")
 
-        logger.info(f"Initialized EPDC")
+        logger.info(f"Initialized EPDC", to_file=True)
 
     def show_image(self, img_path, area=None, left=0, top=0):
         self._epdc.load_image(img_path, area=area, left=left, top=top)

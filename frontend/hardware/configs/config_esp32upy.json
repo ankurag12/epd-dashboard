@@ -75,7 +75,7 @@
     "TOUCH": {
       "HOME": {
         "pin": 14,
-        "thresh": 500
+        "thresh": 200
       }
     },
     "POWER": {

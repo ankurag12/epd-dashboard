@@ -4,6 +4,7 @@ import time
 import esp32
 import machine
 import network
+import ntptime
 
 from hardware.mcu import mcu
 from utils.logging import Logger
@@ -67,10 +68,10 @@ class ESP32Power(mcu.Power):
 
     def deep_sleep(self, time_ms=-1):
         if time_ms > 0:
-            logger.info(f"Going to deep sleep for {time_ms / 1000} seconds")
+            logger.info(f"Going to deep sleep for {time_ms / 1000} seconds", to_file=True)
             return machine.deepsleep(time_ms)
         else:
-            logger.info(f"Going to deep sleep indefinitely")
+            logger.info(f"Going to deep sleep indefinitely", to_file=True)
             return machine.deepsleep()
 
     def light_sleep(self, time_ms=-1):
@@ -93,7 +94,7 @@ class ESP32Power(mcu.Power):
             machine.DEEPSLEEP_RESET: "DEEPSLEEP_RESET"
         }
         reset_cause = machine.reset_cause()
-        logger.info(f"Reset Cause: {reset_cause}")
+        logger.info(f"Reset Cause: {reset_cause}", to_file=True)
         return reset_causes.get(reset_cause, "UNKNOWN")
 
 
@@ -131,7 +132,7 @@ class ESP32Network(mcu.Network):
                 self.disconnect()
                 self.connect(ssid=ssid, password=password)
 
-        logger.info(f"Network config:\n{self._wlan.ifconfig()}")
+        logger.info(f"Network config:\n{self._wlan.ifconfig()}", to_file=True)
         self._retries = 0
 
     def disconnect(self):
@@ -226,6 +227,8 @@ class ESP32SPI(mcu.SPI):
 class ESP32uPy(mcu.MCU):
     def __init__(self, hw_config):
         super().__init__(hw_config=hw_config)
+        ntptime.settime()
+        self._rtc = machine.RTC()
 
     @classmethod
     def get_gpio_impl(cls):
@@ -262,3 +265,8 @@ class ESP32uPy(mcu.MCU):
     @staticmethod
     def sleep_ms(ms):
         return time.sleep_ms(ms)
+
+    def rtc_time(self, *args):
+        dt = self._rtc.datetime(*args)
+        # Return a formatted string and in California timezone
+        return f"{dt[0]}-{dt[1]}-{dt[2]} {dt[4] - 7}:{dt[5]}:{dt[6]}.{dt[7]}"

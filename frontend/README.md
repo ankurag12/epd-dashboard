@@ -1,8 +1,1 @@
-Running main.py on the device
-```
-ampy --port /dev/cu.SLAB_USBtoUART run main.py
-```
-See `ampy --help` for more details
-
-Getting Python REPL
-
+This MicroPython code runs on the ESP32 hardware. Specific board used was [Adafruit HUZZAH32-ESP32](https://learn.adafruit.com/adafruit-huzzah32-esp32-feather) 
