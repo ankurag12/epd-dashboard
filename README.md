@@ -2,7 +2,10 @@
 
 **Dashboard that displays a new Stoic thought everyday!**
 
-#insert video here>
+<p align="middle">
+  <img align="top" src="../media/media/IMG_1015.jpeg?raw=true" height="400" />
+  <img align="top" src="../media/media/IMG_1020.jpeg?raw=true" height="400" /> 
+</p>
 
 The main components of the project are:
 
@@ -13,8 +16,7 @@ The main components of the project are:
   from the server, and sending it to the EPD controller.
 - [ESP32-EPD Adapter](designs): The original eval-kit from Plastic Logic is powered by an MSP430 MCU. However, I wanted
   to run it using an ESP32 for features like WiFi connectivity and Python compatibility. So I made this adapter board
-  that stacks on top of the Adafruit HUZZAH32-ESP32 and connects to the FPC that goes to the EPD controller board (
-  Raven), replacing the MSP430 board (Parrot).
+  that stacks on top of the Adafruit HUZZAH32-ESP32 and connects to the FPC that goes to the EPD controller board (Raven), replacing the MSP430 board (Parrot).
 - [RaspberryPi](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/): It acts as a server that runs 24x7,
   maintaining a repository of images by pulling from Instagram
   account [@dailystoic](https://www.instagram.com/dailystoic/) and serving it to ESP32.
@@ -32,7 +34,11 @@ the ESP32-EPD adapter ([designs](designs)).
 
 ## backend
 
-Create a Python venv and install dependencies
+Run this code on a permanently powered and internet connected system like a RaspberryPi. If a RaspberryPi isn't
+available, any computer running Python can be used as a server. Just make sure to update the URL
+in [main.py](frontend/main.py).
+
+To setup, create a Python venv and install dependencies
 
 ```commandline
 cd backend
@@ -42,23 +48,27 @@ pip install -U pip
 pip install -r requirements.txt
 ```
 
-Run the server indefinitely.
+and run the server indefinitely.
 
 ```commandline
 nohup python server.py &
 ```
 
 After a few seconds, there should be images downloaded in `backend/image_repo`. You can verify that the server is
-working weill by visiting http://raspberrypi.local:8080 in your browser.
+working well by visiting http://raspberrypi.local:8080 in your browser.
 
-**Note:** If a RaspberryPi isn't available, any computer running Python can be used as a server. Just make sure to
-update the URL in [main.py](frontend/main.py)
+The server maintains a queue of available images from `image_repo`, popping one out whenever client (ESP32) queries. If
+the size of the queue drops below a threshold (default=10), it executes another pull from Instagram to
+update `image_repo` and the queue.
+
+To avoid repeating images, it also maintains a history of previously served images as `history.pkl`. Delete that file to
+recycle old images.
 
 ## frontend
 
 This is a MicroPython port of the
-original [MSP430 firmware from PlasticLogic](https://github.com/plasticlogic/pl-mcu-epd) with some modifications like
-pulling the image to display from a server on the network instead of an SD-card.
+original [MSP430 firmware from PlasticLogic](https://github.com/plasticlogic/pl-mcu-epd) (written in C) with some modifications like
+pulling the image to display from a server on the network instead of reading from an SD-card.
 
 If not done already, follow the steps here to
 prepare [ESP32 for MicroPython](https://docs.micropython.org/en/latest/esp32/tutorial/intro.html).
@@ -73,18 +83,35 @@ pip install -U pip
 pip install -r requirements.txt
 ```
 
-Change WiFi and SSID and password in [wifi.json](frontend/wifi.json), and finally run `run.sh` which will transfer all frontend code to the ESP32, pull an image from the server, display it on the EPD, and go to [deep sleep](https://lastminuteengineers.com/esp32-deep-sleep-wakeup-sources/) for approx 24 hours. On wake-up, it will pull and display a new image.
+Change WiFi and SSID and password in [wifi.json](frontend/wifi.json), and run `run.sh`
+
 ```commandline
 ./run.sh
 ```
 
-#### Changing an image on demand
-If you're impatient or you really want to change the current image, ESP32 has a way to wake-up from deep sleep using [touch](https://docs.micropython.org/en/latest/esp32/quickref.html?highlight=deep_sleep#capacitive-touch). 
+This will transfer all frontend code and configs to the ESP32, pull an image from the server, display it on the EPD, and
+go to [deep sleep](https://lastminuteengineers.com/esp32-deep-sleep-wakeup-sources/) for approx 24 hours. On wake-up, it
+will pull and display a new image.
 
-
-**Note:** Before running `run.sh`, make sure that the server is running, else the frontend code will crash because
+Before running `run.sh`, make sure that the server is running, else the frontend code will crash because
 it can't find server! If that happens, perform a hard reset
 
 ```commandline
 ampy --port /dev/cu.SLAB_USBtoUART reset --hard
 ```
+
+#### Changing an image on demand
+
+If you want to change the current image (and understandably don't want to wait 24 hours), ESP32 has a way to wake-up
+from deep sleep
+using [touch](https://docs.micropython.org/en/latest/esp32/quickref.html?highlight=deep_sleep#capacitive-touch). ESP32
+has several capacitive touch-enabled pins; I'm using GPIO #14 that I fly-wired to a corner of the dashboard. Touching
+that corner wakes up the ESP32 and updates the image. It could take ~20s, but still pretty cool! 
+
+## designs
+I used KiCad for designing the adapter board.
+
+## Why Stoic?
+Because I find it interesting 🤷
+
+But yeah, technically, it's a generic dashboard, and one can add any number of Instagram accounts as `SOURCES` in [server.py](backend/server.py) :) 

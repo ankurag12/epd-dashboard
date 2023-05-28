@@ -19,8 +19,7 @@ class IoTDashboard(BaseApp):
         while True:
             self._display_platform.show_image(img_path, **kwargs)
             logger.info(f"Updated Image", to_file=True)
-            self._mcu.network.disconnect()
-            self._mcu.power.deep_sleep(update_interval_sec * 1000)
+            self.deep_sleep(update_interval_sec=update_interval_sec)
             # Waking up from deep sleep starts the program from very beginning. If we're here then it was light sleep
             logger.info(f"Just woke-up from light sleep")
             self._mcu.network.connect()
@@ -31,3 +30,7 @@ class IoTDashboard(BaseApp):
 
     def test_image(self, img_path, **kwargs):
         self._display_platform.show_image(img_path, **kwargs)
+
+    def deep_sleep(self, update_interval_sec=86400):
+        self._mcu.network.disconnect()
+        self._mcu.power.deep_sleep(update_interval_sec * 1000)
