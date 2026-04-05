@@ -67,7 +67,7 @@ class S1D135xx:
         self._mcu = mcu
         self._spi = mcu.spi["EPSON"]
         self._hdc = mcu.gpio.get("EPSON_HDC")
-        self._hrdy = mcu.gpio.get("HRDY")
+        self._hrdy = None   # the demo C code has "#define SPI_HRDY_USED     0 "
         self._cs = mcu.gpio.get("CS_0")
         self._reset = mcu.gpio.get("RESET")
         self._clk_en = mcu.gpio.get("CLK_EN")
@@ -90,7 +90,6 @@ class S1D135xx:
     def _get_hrdy(self):
         if self._hrdy:
             return self._hrdy.get_pin()
-
         status = self._read_reg(S1D135xx.Register.SYSTEM_STATUS)
         return (status & self._hrdy_mask) == self._hrdy_result
 
@@ -207,7 +206,7 @@ class S1D135xx:
     def _wf_mode(cls, wf):
         return (wf << 8) & 0x0F00
 
-    def _wait_idle(self, timeout_ms=1000):
+    def _wait_idle(self, timeout_ms=5000):
         start = self._mcu.ticks_ms()
         while not self._get_hrdy():
             if self._mcu.ticks_diff(self._mcu.ticks_ms(), start) > timeout_ms:
